@@ -1,5 +1,5 @@
 [project]
-name = "vedio-upscaler"
+name = "video_upscaler"
 version = "0.1.0"
 description = "LLaVA + Video Inference tools for vision-language models"
 authors = [
