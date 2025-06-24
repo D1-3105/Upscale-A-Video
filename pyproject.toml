@@ -1,0 +1,43 @@
+[project]
+name = "vedio-upscaler"
+version = "0.1.0"
+description = "LLaVA + Video Inference tools for vision-language models"
+authors = [
+    { name = "Munaza Ashraf", email = "munazaa85@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.9"
+
+dependencies = [
+    "torch",
+    "torchvision",
+    "accelerate",
+    "av",
+    "decord",
+    "diffusers",
+    "einops",
+    "ffmpeg-python",
+    "imageio",
+    "numpy",
+    "imageio-ffmpeg",
+    "timm",
+    "transformers",
+    "xformers",
+    "sentencepiece",
+    "rotary-embedding-torch",
+    "tqdm",
+    "pandas",
+    "omegaconf",
+    "opencv-python",
+    "scipy",
+    "pyfiglet"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llava*", "models_video*", "*"]
+
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
