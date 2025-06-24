@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='vedio-upscaler',
+    name='vedio_upscaler',
     version='0.1.0',
     description='LLaVA + Video Inference tools for vision-language models',
     long_description=open('README.md').read(),
