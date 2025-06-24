@@ -35,7 +35,7 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["llava*", "models_video*", "*"]
+include = ["llava*", "models_video*","upscale_utils", "*"]
 
 
 [build-system]

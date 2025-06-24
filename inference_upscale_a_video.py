@@ -45,8 +45,8 @@ from models_video.scheduling_ddim import DDIMScheduler
 from models_video.color_correction import wavelet_reconstruction, adaptive_instance_normalization
 
 from llava.llava_agent import LLavaAgent
-from utils import get_video_paths, read_frame_from_videos, str_to_list
-from utils import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
+from upscale_utils.utils import get_video_paths, read_frame_from_videos, str_to_list
+from upscale_utils.utils import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 from configs.CKPT_PTH import LLAVA_MODEL_PATH
 
 

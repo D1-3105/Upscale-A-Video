@@ -33,7 +33,7 @@ from models_video.color_correction import (
     adaptive_instance_normalization,
 )
 from llava.llava_agent import LLavaAgent
-from utils import read_frame_from_videos, VIDEO_EXTENSIONS
+from upscale_utils.utils import read_frame_from_videos, VIDEO_EXTENSIONS
 
 
 MODEL_CACHE = "model_cache"

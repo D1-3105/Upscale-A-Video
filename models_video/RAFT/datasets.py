@@ -11,7 +11,7 @@ import random
 from glob import glob
 import os.path as osp
 
-from utils import frame_utils
+from upscale_utils.utils import frame_utils
 from utils.augmentor import FlowAugmentor, SparseFlowAugmentor
 
 
