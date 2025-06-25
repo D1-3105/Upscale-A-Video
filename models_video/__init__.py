@@ -2,7 +2,7 @@ from .autoencoder_kl_cond_video import AutoencoderKLVideo
 from .unet_video import UNetVideoModel
 from .propagation_module import Propagation
 from torch.optim.lr_scheduler import LambdaLR
-from .pipeline_upscale_a_video import VideoUpscalePipeline
+from .pipeline_upscale_a_video import VideoUpscalePipeline as UpscaleAVideoPipeline
 
 def customized_lr_scheduler(optimizer, warmup_steps=5000): # 5000 from u-vit
     from torch.optim.lr_scheduler import LambdaLR
