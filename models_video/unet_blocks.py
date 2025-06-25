@@ -13,7 +13,7 @@ except:
     from attention import Transformer3DModel
     from resnet import Downsample3D, ResnetBlock3D, Upsample3D, ResnetBlock3D_plus
 
-from diffusers.models.attention import AttentionBlock
+from diffusers.models.attention import Attention
 from einops import rearrange
 
 def get_down_block(
@@ -662,7 +662,7 @@ class UpBlock3D(nn.Module):
                 hidden_states = upsampler(hidden_states, upsample_size)
 
         return hidden_states
-    
+
 class UNetMidBlock3D(nn.Module):
     def __init__(
         self,
@@ -703,7 +703,7 @@ class UNetMidBlock3D(nn.Module):
         for _ in range(num_layers):
             if self.add_attention:
                 attentions.append(
-                    AttentionBlock(
+                    Attention(
                         in_channels,
                         num_head_channels=attn_num_head_channels,
                         rescale_output_factor=output_scale_factor,
@@ -743,7 +743,7 @@ class UNetMidBlock3D(nn.Module):
             hidden_states = resnet(hidden_states, temb)
 
         return hidden_states
-    
+
 
 class DownEncoderBlock3D(nn.Module):
     def __init__(
@@ -857,7 +857,7 @@ class UpDecoderBlock3D(nn.Module):
                 hidden_states = upsampler(hidden_states)
 
         return hidden_states
-    
+
 ###################################
 class UNetMidBlock3D_plus(nn.Module):
     def __init__(
@@ -899,7 +899,7 @@ class UNetMidBlock3D_plus(nn.Module):
         for _ in range(num_layers):
             if self.add_attention:
                 attentions.append(
-                    AttentionBlock(
+                    Attention(
                         in_channels,
                         num_head_channels=attn_num_head_channels,
                         rescale_output_factor=output_scale_factor,

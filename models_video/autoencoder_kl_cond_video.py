@@ -12,24 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-from typing import Optional, Tuple, Union
-import os
-import torch
-import torch.nn as nn
-from einops import rearrange
-import imageio
-import numpy as np
 
+import torch
 from diffusers.configuration_utils import ConfigMixin, register_to_config
-from diffusers.utils import BaseOutput, apply_forward_hook
 from diffusers.models.modeling_utils import ModelMixin
+from diffusers.utils import BaseOutput
+from diffusers.utils.accelerate_utils import apply_forward_hook
+from einops import rearrange
+
 # from diffusers.models.vae import Decoder, DecoderOutput, DiagonalGaussianDistribution, Encoder
-try:
-    from .vae_video import Decoder, DecoderOutput, DiagonalGaussianDistribution, Encoder 
-    from .resnet import InflatedConv3d
-except:
-    from vae_video import Decoder, DecoderOutput, DiagonalGaussianDistribution, Encoder
-    from resnet import InflatedConv3d
+from .resnet import InflatedConv3d
+from .vae_video import Decoder, DecoderOutput, DiagonalGaussianDistribution, Encoder
 
 @dataclass
 class AutoencoderKLOutput(BaseOutput):
@@ -80,9 +73,9 @@ class AutoencoderKLVideo(ModelMixin, ConfigMixin):
         self,
         in_channels: int = 3,
         out_channels: int = 3,
-        down_block_types: Tuple[str] = ("DownEncoderBlock3D",),
-        up_block_types: Tuple[str] = ("UpDecoderBlock3D",),
-        block_out_channels: Tuple[int] = (64,),
+        down_block_types: tuple[str] = ("DownEncoderBlock3D",),
+        up_block_types: tuple[str] = ("UpDecoderBlock3D",),
+        block_out_channels: tuple[int] = (64,),
         layers_per_block: int = 1,
         act_fn: str = "silu",
         latent_channels: int = 4,
@@ -184,7 +177,7 @@ class AutoencoderKLVideo(ModelMixin, ConfigMixin):
 
         return AutoencoderKLOutput(latent_dist=posterior)
 
-    def _decode(self, z: torch.FloatTensor, return_dict: bool = True) -> Union[DecoderOutput, torch.FloatTensor]:
+    def _decode(self, z: torch.FloatTensor, return_dict: bool = True) -> DecoderOutput | torch.FloatTensor:
         if self.use_tiling and (z.shape[-1] > self.tile_latent_min_size or z.shape[-2] > self.tile_latent_min_size):
             return self.tiled_decode(z, return_dict=return_dict)
 
@@ -196,7 +189,7 @@ class AutoencoderKLVideo(ModelMixin, ConfigMixin):
 
         return DecoderOutput(sample=dec)
 
-    def _decode_cond(self, z: torch.FloatTensor, img: torch.FloatTensor = None, w_lr = 1, return_dict: bool = True) -> Union[DecoderOutput, torch.FloatTensor]:
+    def _decode_cond(self, z: torch.FloatTensor, img: torch.FloatTensor = None, w_lr = 1, return_dict: bool = True) -> DecoderOutput | torch.FloatTensor:
         z = self.post_quant_conv(z)
         dec = self.decoder(z, img, w_lr)
 
@@ -206,13 +199,13 @@ class AutoencoderKLVideo(ModelMixin, ConfigMixin):
         return DecoderOutput(sample=dec)
 
     @apply_forward_hook
-    def decode(self, z: torch.FloatTensor, img: torch.FloatTensor = None, w_lr = 1, return_dict: bool = True) -> Union[DecoderOutput, torch.FloatTensor]:
+    def decode(self, z: torch.FloatTensor, img: torch.FloatTensor = None, w_lr = 1, return_dict: bool = True) -> DecoderOutput | torch.FloatTensor:
         if img is not None:
             if self.use_slicing and z.shape[0] > 1:
                 decoded_slices = [self._decode_cond(z_slice, img_slice, w_lr).sample for z_slice, img_slice in zip(z.split(1), img.split(1))]
                 decoded = torch.cat(decoded_slices)
             else:
-                decoded = self._decode_cond(z, img, w_lr).sample        
+                decoded = self._decode_cond(z, img, w_lr).sample
         else:
             if self.use_slicing and z.shape[0] > 1:
                 decoded_slices = [self._decode(z_slice).sample for z_slice in z.split(1)]
@@ -282,7 +275,7 @@ class AutoencoderKLVideo(ModelMixin, ConfigMixin):
 
         return AutoencoderKLOutput(latent_dist=posterior)
 
-    def tiled_decode(self, z: torch.FloatTensor, img: torch.FloatTensor, return_dict: bool = True) -> Union[DecoderOutput, torch.FloatTensor]:
+    def tiled_decode(self, z: torch.FloatTensor, img: torch.FloatTensor, return_dict: bool = True) -> DecoderOutput | torch.FloatTensor:
         r"""Decode a batch of images using a tiled decoder.
 
         Args:
@@ -307,7 +300,7 @@ class AutoencoderKLVideo(ModelMixin, ConfigMixin):
         for i in range(0, z.shape[3], overlap_size):
             row = []
             for j in range(0, z.shape[4], overlap_size):
-                tile = z[:, :, :, i : i + self.tile_latent_min_size, j : j + self.tile_latent_min_size]              
+                tile = z[:, :, :, i : i + self.tile_latent_min_size, j : j + self.tile_latent_min_size]
                 tile = self.post_quant_conv(tile)
                 img_cond = img[:, :, :, i : i + self.tile_latent_min_size, j : j + self.tile_latent_min_size]
                 decoded = self.decoder(tile, img_cond)
@@ -337,8 +330,8 @@ class AutoencoderKLVideo(ModelMixin, ConfigMixin):
         sample: torch.FloatTensor,
         sample_posterior: bool = False,
         return_dict: bool = True,
-        generator: Optional[torch.Generator] = None,
-    ) -> Union[DecoderOutput, torch.FloatTensor]:
+        generator: torch.Generator | None = None,
+    ) -> DecoderOutput | torch.FloatTensor:
         r"""
         Args:
             sample (`torch.FloatTensor`): Input sample.
@@ -359,20 +352,20 @@ class AutoencoderKLVideo(ModelMixin, ConfigMixin):
             return (dec,)
 
         return DecoderOutput(sample=dec)
-    
+
     def get_last_layer(self):
         return self.decoder.conv_out.weight
-    
+
     # add training loss
     def training_losses(self, inputs, gts, latents, optimizer_idx, dual_loss, train_steps):
 
         latents = 1 / self.scaling_factor * latents
         reconstructions = self.decode(latents, inputs).sample # conditional decoder
         reconstructions_vis = reconstructions.clone()[0]
-        
+
         v_len = gts.shape[2]
-        gts = rearrange(gts, 'b c t h w -> (b t) c h w').contiguous()
-        reconstructions = rearrange(reconstructions, 'b c t h w -> (b t) c h w').contiguous()
+        gts = rearrange(gts, "b c t h w -> (b t) c h w").contiguous()
+        reconstructions = rearrange(reconstructions, "b c t h w -> (b t) c h w").contiguous()
 
         if optimizer_idx == 0:
             # train encoder+decoder+logvar

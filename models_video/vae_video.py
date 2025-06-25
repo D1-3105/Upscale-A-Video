@@ -18,27 +18,18 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from diffusers.utils import BaseOutput, randn_tensor
+from diffusers.utils import BaseOutput
+from diffusers.utils.torch_utils import randn_tensor
 
-try:
-    from .unet_blocks import (
-        UNetMidBlock3D,
-        UNetMidBlock3D_plus,
-        get_down_block,
-        get_up_block,
-    )
-    from .resnet import InflatedConv3d, ResnetBlock3D, Fuse_sft_block, Fuse_CA_block, ResnetBlock3D_plus
-    from .temporal_module import TemporalModule3DVAE, EmptyTemporalModule3D
-except:
-    from unet_blocks import (
-        UNetMidBlock3D,
-        UNetMidBlock3D_plus,
-        get_down_block,
-        get_up_block,
-    )
-    from resnet import InflatedConv3d, ResnetBlock3D, Fuse_sft_block, Fuse_CA_block, ResnetBlock3D_plus
-    from temporal_module import TemporalModule3DVAE, EmptyTemporalModule3D
-    
+from .unet_blocks import (
+    UNetMidBlock3D,
+    UNetMidBlock3D_plus,
+    get_down_block,
+    get_up_block,
+)
+from .resnet import InflatedConv3d, ResnetBlock3D, Fuse_sft_block, Fuse_CA_block, ResnetBlock3D_plus
+from .temporal_module import TemporalModule3DVAE, EmptyTemporalModule3D
+
 @dataclass
 class DecoderOutput(BaseOutput):
     """

@@ -25,7 +25,8 @@ from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer
 
 from diffusers.loaders import TextualInversionLoaderMixin
 from diffusers.schedulers import DDPMScheduler
-from diffusers.utils import deprecate, is_accelerate_available, is_accelerate_version, logging, randn_tensor
+from diffusers.utils import deprecate, is_accelerate_available, is_accelerate_version, logging
+from diffusers.utils.torch_utils import randn_tensor
 from diffusers.pipelines.pipeline_utils import DiffusionPipeline
 from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 
@@ -34,7 +35,7 @@ from models_video import AutoencoderKLVideo, UNetVideoModel, Propagation
 
 from einops import rearrange
 
-logger = logging.get_logger(__name__) 
+logger = logging.get_logger(__name__)
 
 
 def preprocess(image):
@@ -107,7 +108,7 @@ class VideoUpscalePipeline(DiffusionPipeline, TextualInversionLoaderMixin):
         self.unet = self.unet.to(device)
         if self.propagator is not None:
             self.propagator = self.propagator.to(device)
-        
+
         return super(VideoUpscalePipeline, self).to(device)
 
     def enable_sequential_cpu_offload(self, gpu_id=0):
@@ -560,8 +561,8 @@ class VideoUpscalePipeline(DiffusionPipeline, TextualInversionLoaderMixin):
         # 5. set timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
         timesteps = self.scheduler.timesteps
-        
-        # 6. Prepare latent variables        
+
+        # 6. Prepare latent variables
         num_channels_latents = self.vae.config.latent_channels
         seq_len, height, width = image.shape[2:]
         latents = self.prepare_latents_3d(
@@ -600,7 +601,7 @@ class VideoUpscalePipeline(DiffusionPipeline, TextualInversionLoaderMixin):
             progress_bar.set_description(" "*8 + "Denoising")
             short_seq = 8
             overlap_seq = 2
-                
+
             stride_seq = short_seq - overlap_seq
             vframes_seq = image.shape[2]
 
@@ -621,10 +622,10 @@ class VideoUpscalePipeline(DiffusionPipeline, TextualInversionLoaderMixin):
                     for start_f in range(0, vframes_seq, stride_seq):
                         torch.cuda.empty_cache()
                         end_f = min(vframes_seq, start_f + short_seq)
-                        if end_f - start_f < short_seq: 
+                        if end_f - start_f < short_seq:
                             start_f = end_f - short_seq # keep f_num is 8 for each seq
                         noise_pred_ = self.unet(
-                            latent_model_input[:,:,start_f:end_f], t, image[:,:,start_f:end_f], 
+                            latent_model_input[:,:,start_f:end_f], t, image[:,:,start_f:end_f],
                             encoder_hidden_states=prompt_embeds, class_labels=denoise_level
                         ).sample
                         for k, idx in enumerate(list(range(start_f, end_f))):
@@ -638,30 +639,30 @@ class VideoUpscalePipeline(DiffusionPipeline, TextualInversionLoaderMixin):
                         latent_model_input, t, image, encoder_hidden_states=prompt_embeds, class_labels=noise_level
                     ).sample
 
-                
+
                 # perform guidance
                 if do_classifier_free_guidance:
                     noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
                     noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
-                
+
                 # compute the previous noisy sample x_t -> x_t-1
                 # latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
                 x0 = self.scheduler.step_v0(noise_pred, t, latents, **extra_step_kwargs).pred_original_sample
-                
+
                 # performe feature propagation
                 if flows_bi is not None and i in propagation_steps:
                     flows_forward, flows_backward = flows_bi[0].to(latents), flows_bi[1].to(latents)
 
-                    x0 = self.propagator(x0, flows_forward, flows_backward, 
+                    x0 = self.propagator(x0, flows_forward, flows_backward,
                                             interpolation='nearest', mode='fuse', fuse_scale=0.5,
                                             alpha1=0.001, alpha2=0.05)
 
                 latents = self.scheduler.step_vt(x0, noise_pred, t, latents, **extra_step_kwargs).prev_sample
 
                 progress_bar.update(1)
-                        
+
                 del latent_model_input, noise_pred
-                
+
 
         # 10. Post-processing
         # make sure the VAE is in float32 mode, as it overflows in float16
