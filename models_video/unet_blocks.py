@@ -13,7 +13,7 @@ except:
     from attention import Transformer3DModel
     from resnet import Downsample3D, ResnetBlock3D, Upsample3D, ResnetBlock3D_plus
 
-from diffusers.models.attention import Attention
+from .diffusers_attention import AttentionBlock
 from einops import rearrange
 
 def get_down_block(
@@ -703,7 +703,7 @@ class UNetMidBlock3D(nn.Module):
         for _ in range(num_layers):
             if self.add_attention:
                 attentions.append(
-                    Attention(
+                    AttentionBlock(
                         in_channels,
                         num_head_channels=attn_num_head_channels,
                         rescale_output_factor=output_scale_factor,
@@ -899,7 +899,7 @@ class UNetMidBlock3D_plus(nn.Module):
         for _ in range(num_layers):
             if self.add_attention:
                 attentions.append(
-                    Attention(
+                    AttentionBlock(
                         in_channels,
                         num_head_channels=attn_num_head_channels,
                         rescale_output_factor=output_scale_factor,

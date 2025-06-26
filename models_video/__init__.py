@@ -3,6 +3,7 @@ from .unet_video import UNetVideoModel
 from .propagation_module import Propagation
 from torch.optim.lr_scheduler import LambdaLR
 from .pipeline_upscale_a_video import VideoUpscalePipeline as UpscaleAVideoPipeline
+from .scheduling_ddim import DDIMScheduler
 
 def customized_lr_scheduler(optimizer, warmup_steps=5000): # 5000 from u-vit
     from torch.optim.lr_scheduler import LambdaLR
@@ -22,10 +23,10 @@ def get_lr_scheduler(optimizer, name, **kwargs):
         return CosineAnnealingLR(optimizer, **kwargs)
     else:
         raise NotImplementedError(name)
-    
+
 def get_models(config_path='./configs/unet_video_config.json'):
     config_path = config_path
     pretrained_model_path = "./pretrained_models/unet_diffusion_pytorch_model.bin"
     return UNetVideoModel.from_pretrained_2d(config_path, pretrained_model_path)
 
-    
+
