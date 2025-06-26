@@ -22,9 +22,7 @@ class TilesBuilder:
         self.tile_height = self.tile_width = tile_side_size
         self.tile_overlap_height = self.tile_overlap_width = tile_overlap
         self.output_shape = (b, c, t, h * 4, w * 4)
-        self.output = torch.Tensor(
-            (),
-        ).new_zeros(self.output_shape, dtype=torch.uint8)
+        self.flush_output()
         self.tiles_x = math.ceil(w / self.tile_width)
         self.tiles_y = math.ceil(h / self.tile_height)
         self.rm_end_pad_w, self.rm_end_pad_h = True, True
@@ -40,7 +38,7 @@ class TilesBuilder:
     def flush_output(self):
         self.output = torch.Tensor(
             (),
-        ).new_zeros(self.output_shape, dtype=torch.uint8)
+        ).new_zeros(self.output_shape, dtype=torch.float32)
 
     def add_processed_tile(self, output_tile, tile_info: TileInfo):
         x, y, input_start_x, input_end_x, input_start_y, input_end_y, input_start_x_pad, input_start_y_pad = tile_info
